@@ -42,8 +42,8 @@ INCLUDEPATH += ./Zint/include \
 #make all               -------两个版本都生成
 #屏蔽release版本中所有QDebug()提示信息，可以在pro文件中添加DEFINES+=QT_NO_DEBUG_OUTPUT
 CONFIG(debug, debug|release) {
-    #LIBS += -L./Zint/bin/Win32/Debug -lzintd
-    LIBS += -LD:/Qt/WorkSpace/BarCode/BarCodeTest/Zint/bin/Win32/Debug -lzintd
+    #LIBS += -L"./Zint/bin/Win32/Debug" -lzintd
+    LIBS += -LD:/Qt/WorkSpace/BarCode/BarCodeTest01/BarCodeTest/Zint/bin/Win32/Debug -lzintd
 }
 else {
     LIBS += -L./Zint/bin/Win32/Release -lzint

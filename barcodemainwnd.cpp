@@ -59,7 +59,10 @@ void BarCodeMainWnd::on_btnPrint_clicked()
         barCode128Img = ConstructBarCode(strMsg, "XBox Player Control Sony Company");
 
     ui->label->setPixmap(QPixmap().fromImage(barCode128Img));
+    QImage barCode128ScaledImg = barCode128Img.scaled(barCode128Img.width()*0.9, barCode128Img.height(),Qt::KeepAspectRatio);
     barCode128Img.save("barcode128.png");
+    barCode128ScaledImg.save("barcode128Scaled.png");
+    printBarcode(barCode128Img);
 }
 
 // Code93 : BJ100080
@@ -156,6 +159,42 @@ void BarCodeMainWnd::printBarcode(const QString &strTitle)
     //QFile::remove(strImagePath);
 }
 
+void BarCodeMainWnd::printBarcode(const QImage &barCodeImg)
+{
+    //绘制
+    QPrinter printer;
+    QPrintDialog printdialog(&printer, this);
+    if (printdialog.exec())
+    {
+        //这里我如何保证不进行拉伸呢
+        //QString strname = printer.printerName();
+        int dpi = printer.logicalDpiX();
+        int nmm = printer.paperRect(QPrinter::Millimeter).width();
+        int width = std::min(nmm, 40)*(dpi*1.0/25.4);     //这里选择40mm纸张
+        QPainter painter(&printer);
+        //QImage image(strImagePath, "PNG");
+        QRect rt1 = barCodeImg.rect();
+        QRect rtwindow = painter.window();
+        QRect rtview = painter.viewport();
+        int nmax = 0;
+        if (barCodeImg.width() + 20 < width)
+            nmax = std::max(barCodeImg.width() + 20, width);
+        else
+            nmax = std::min(barCodeImg.width() + 20, width);
+
+        QRect rtimage(0, 0, nmax, rtwindow.height());
+        QRect rtimageview(0, 0, nmax, rtview.height());
+        int nmin = std::min(barCodeImg.width(), nmax - 40);
+        QRectF rtdes(40, 10, nmin, 100);
+        QRectF rtsrc(0, 0, barCodeImg.width(), barCodeImg.height());
+        painter.setWindow(rtimage);
+        painter.setViewport(rtimageview);
+        painter.drawImage(rtdes, barCodeImg, rtsrc);
+        painter.setWindow(rtwindow);
+        painter.setViewport(rtview);
+    }
+}
+
 // dpi : dots per inch,直接来说就是一英寸多少个像素点。常见取值 120，160，240。我一般称作像素密度，简称密度。
 // 1英寸 : 25.4毫米(mm)
 void BarCodeMainWnd::printBarCodeVLabel(const QString &strNum, const QString &label/*="Made in China"*/)
@@ -243,13 +282,17 @@ QImage BarCodeMainWnd::ConstructBarCode(const QString &strNum, const QString &de
     //生成图片
     struct zint_symbol * my_symbol = ZBarcode_Create();
     my_symbol->symbology =  BARCODE_CODE128;
+    my_symbol->height = 25;  //条码高度(输入参数)
+    //my_symbol->width = 40;   //条码宽度(输出参数)
+    //my_symbol->output_options += SMALL_TEXT;  //使用更小的字体显示编号
+    //strcpy_s((char*)my_symbol->text, sizeof(my_symbol->text),describeLabel.toStdString().c_str());
     strcpy(my_symbol->outfile, strImagePath.toLocal8Bit().toStdString().c_str());
     ZBarcode_Encode(my_symbol, (unsigned char*)strNum.toStdString().c_str(), 0);
     ZBarcode_Print(my_symbol, 0);
     ZBarcode_Delete(my_symbol);
     //从图片生成QIamge
     QImage barCodeImg(strImagePath, "PNG");
-    QImage barCodeScaledImg = barCodeImg.scaled(barCodeImg.width()*0.85, barCodeImg.height(), Qt::KeepAspectRatio);  //缩放
+    QImage barCodeScaledImg = barCodeImg.scaled(barCodeImg.width()/**0.65*/, barCodeImg.height()/**0.65*/, Qt::KeepAspectRatio);  //缩放
 
     //(左上角)定位点
     QPoint ptMadeInfoLabel(BARCODENS::MADEINFOFFSETX, BARCODENS::MADEINFOFFSETY);    //制造国
@@ -259,7 +302,7 @@ QImage BarCodeMainWnd::ConstructBarCode(const QString &strNum, const QString &de
     //计算madeInfoLabel串尺寸
     QFont font;
     font.setFamily("Courier New");
-    font.setPixelSize(13);
+    font.setPixelSize(11);
     QSize szMadeInfoLabel = calcStringMetrics(madeInfoLabel, font);
 
     //绘制到QPixmap
@@ -268,9 +311,17 @@ QImage BarCodeMainWnd::ConstructBarCode(const QString &strNum, const QString &de
     QPainter p(&pix);
     p.setFont(font);
 
+    //获取画板尺寸信息
+    QRect rcWindow = p.window();
+    QRect rcView = p.viewport();
+    //设置画板尺寸
+    //p.setWindow(-devPixWidth/2, -devPixHeigth/2, devPixWidth, -devPixHeigth);
+    //p.setViewport(0, 0, devPixWidth, devPixHeigth);
     //绘制制造国信息
     QPoint ptMadeInfo((devPixWidth-szMadeInfoLabel.width())/2 + ptMadeInfoLabel.x(), ptMadeInfoLabel.y());
-    p.drawText(ptMadeInfo, madeInfoLabel);
+    p.drawText(QRect(ptMadeInfo, QPoint(devPixWidth, szMadeInfoLabel.height())), madeInfoLabel);
+
+
 
     //绘制条码
     //QRect rcTarget(ptBarCode.x(), ptMadeInfoLabel.y() + szMadeInfoLabel.height() + ptBarCode.y(), devPixWidth, devPixHeigth);
@@ -279,18 +330,22 @@ QImage BarCodeMainWnd::ConstructBarCode(const QString &strNum, const QString &de
     p.drawImage((devPixWidth-barCodeScaledImg.width())/2 + ptBarCode.x(), \
                 /*ptMadeInfoLabel.y() + */szMadeInfoLabel.height() + ptBarCode.y(),\
                 barCodeScaledImg,\
-                0,\
-                barCodeScaledImg.height()*BARCODENS::BarCodeScaledRate);
+                0, 0);
     //绘制商品信息
-    QPoint ptDescribe(ptDescribeLabel.x(), /*ptMadeInfo.y()+ */ ptDescribeLabel.y() + szMadeInfoLabel.height() +barCodeScaledImg.height()*(1-BARCODENS::BarCodeScaledRate));
-    //p.drawText(ptDescribe, describeLabel);  //无自动换行
-    p.drawText(QRect(ptDescribe, QPoint(devPixWidth, devPixHeigth)), Qt::TextHideMnemonic/*TextWrapAnywhere*/|Qt::TextIncludeTrailingSpaces, describeLabel);
+    font.setPixelSize(8);
+    p.setFont(font);
+    QPoint ptDescribe(ptDescribeLabel.x(), /*ptMadeInfo.y()+ ptBarCode.y() + ptDescribeLabel.y() + */ szMadeInfoLabel.height() + barCodeScaledImg.height());
+    p.drawText(QRect(ptDescribe, QPoint(devPixWidth-BARCODENS::DESCRIBELOFFSETX, devPixHeigth)), Qt::TextWrapAnywhere, describeLabel);
+
+    //p.setWindow(rcWindow);
+    //p.setViewport(rcView);
+
     //结束绘制
     p.end();
 
     //这里再删除图片
-    QFile file(strImagePath);
-    QFile::remove(strImagePath);
+    //QFile file(strImagePath);
+    //QFile::remove(strImagePath);
 
     return pix.toImage();
 }
