@@ -25,9 +25,9 @@ namespace BARCODENS {
 //    const int DESCRIBELOFFSETY = -2;  //商品描述信息Y轴偏移量
 //    const float MllimeterPerInch = 25.4;   // 1英寸=25.4mm
 //    const float BarCodeScaledRate = 0.35;  //条形码缩放比例
-    const int MADEINFOFFSETX = 0;    //制造国信息X轴偏移量
+    const int MADEINFOFFSETX = 25;    //制造国信息X轴偏移量
     const int MADEINFOFFSETY = 0;    //制造国信息Y轴偏移量
-    const int BARCODEOFFSETX = 0;    //条码X轴偏移量
+    const int BARCODEOFFSETX = 25;    //条码X轴偏移量
     const int BARCODEOFFSETY = 0;    //条码Y轴偏移量
     const int DESCRIBELOFFSETX = 3;  //商品描述信息X轴偏移量
     const int DESCRIBELOFFSETY = 0;  //商品描述信息Y轴偏移量

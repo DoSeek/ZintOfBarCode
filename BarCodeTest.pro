@@ -34,7 +34,7 @@ FORMS    += barcodemainwnd.ui
 
 RESOURCES += \
 
-INCLUDEPATH += ./Zint/include \
+INCLUDEPATH += "./Zint/include" \
 
 
 #make 或 make debug     -------生成debug版
@@ -42,9 +42,13 @@ INCLUDEPATH += ./Zint/include \
 #make all               -------两个版本都生成
 #屏蔽release版本中所有QDebug()提示信息，可以在pro文件中添加DEFINES+=QT_NO_DEBUG_OUTPUT
 CONFIG(debug, debug|release) {
-    #LIBS += -L"./Zint/bin/Win32/Debug" -lzintd
-    LIBS += -LD:/Qt/WorkSpace/BarCode/BarCodeTest01/BarCodeTest/Zint/bin/Win32/Debug -lzintd
+    LIBS += -L"$$PWD/Zint/bin/Win32/Debug" -lzintd
+
 }
 else {
-    LIBS += -L./Zint/bin/Win32/Release -lzint
+    LIBS += -L"$$PWD/Zint/bin/Win32/Release" -lzint
 }
+
+
+DISTFILES += \
+    笔记.txt

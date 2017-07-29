@@ -306,7 +306,7 @@ QImage BarCodeMainWnd::ConstructBarCode(const QString &strNum, const QString &de
     QSize szMadeInfoLabel = calcStringMetrics(madeInfoLabel, font);
 
     //绘制到QPixmap
-    QPixmap pix(QSize(devPixWidth, devPixHeigth));
+    QPixmap pix(QSize(devPixWidth+50, devPixHeigth));
     pix.fill();
     QPainter p(&pix);
     p.setFont(font);
@@ -332,7 +332,7 @@ QImage BarCodeMainWnd::ConstructBarCode(const QString &strNum, const QString &de
                 barCodeScaledImg,\
                 0, 0);
     //绘制商品信息
-    font.setPixelSize(8);
+    font.setPixelSize(10);
     p.setFont(font);
     QPoint ptDescribe(ptDescribeLabel.x(), /*ptMadeInfo.y()+ ptBarCode.y() + ptDescribeLabel.y() + */ szMadeInfoLabel.height() + barCodeScaledImg.height());
     p.drawText(QRect(ptDescribe, QPoint(devPixWidth-BARCODENS::DESCRIBELOFFSETX, devPixHeigth)), Qt::TextWrapAnywhere, describeLabel);
